@@ -28,8 +28,8 @@ var (
 	insecure     bool
 	stdin        *os.File
 
-	emailSubjectTemplate = "Sensu Alert - {{.Entity.Name}}/{{.Check.Name}}: {{.Check.State}}"
-	emailBodyTemplate    = "{{.Check.Output}}"
+	emailSubjectTemplate = "{{.Entity.Namespace}} - {{.Entity.Name}} - {{.Check.Name}} - {{.Check.State}}"
+	emailBodyTemplate    = "Server: {{.Entity.Name}}\nNamespace: {{.Entity.Namespace}}\n\nCheck: {{.Check.Name}}\nCheck status: {{.Check.State}}\nCheck output: {{.Check.Output}}\n\nSensu dashboard: https://sensu-dashboard.prod.monitoring.photobox.com/{{.Entity.Namespace}}/events/{{.Entity.Name}}/{{.Check.Name}}"
 )
 
 func main() {
@@ -79,6 +79,17 @@ func run(cmd *cobra.Command, args []string) error {
 	if !event.HasCheck() {
 		return fmt.Errorf("event does not contain check")
 	}
+
+        switch event.Check.Status {
+                case 1:
+                    event.Check.State = "warning"
+                case 2:
+                    event.Check.State = "critical"
+                case 3:
+                    event.Check.State = "unknown"
+                default:
+                    event.Check.State = "ok"
+        }
 
 	sendMailError := sendEmail(event)
 	if sendMailError != nil {
