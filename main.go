@@ -11,6 +11,7 @@ import (
 	"os"
 	"text/template"
 
+        "github.com/Masterminds/sprig"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,7 @@ var (
 	stdin        *os.File
 
 	emailSubjectTemplate = "{{.Entity.Namespace}} - {{.Entity.Name}} - {{.Check.Name}} - {{.Check.State}}"
-	emailBodyTemplate    = "Server: {{.Entity.Name}}\nNamespace: {{.Entity.Namespace}}\n\nCheck: {{.Check.Name}}\nCheck status: {{.Check.State}}\nCheck output: {{.Check.Output}}\n\nSensu dashboard: https://sensu-dashboard.prod.monitoring.photobox.com/{{.Entity.Namespace}}/events/{{.Entity.Name}}/{{.Check.Name}}"
+	emailBodyTemplate    = "Server: {{.Entity.Name}}\nNamespace: {{.Entity.Namespace}}\nDate: {{.Timestamp | date \"2006-01-02 15:04:05\" }}\n\nCheck: {{.Check.Name}}\nCheck status: {{.Check.State}}\nCheck output: {{.Check.Output}}\n\nSensu dashboard: https://sensu-dashboard.prod.monitoring.photobox.com/{{.Entity.Namespace}}/events/{{.Entity.Name}}/{{.Check.Name}}"
 )
 
 func main() {
@@ -174,7 +175,7 @@ func sendEmail(event *types.Event) error {
 
 func resolveTemplate(templateValue string, event *types.Event) (string, error) {
 	var resolved bytes.Buffer
-	tmpl, err := template.New("test").Parse(templateValue)
+	tmpl, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(templateValue)
 	if err != nil {
 		panic(err)
 	}
